@@ -7,7 +7,7 @@ import (
 	"github.com/jetbasrawi/go.cqrs"
 )
 
-var bullShitDatabase *BullShitDatabase
+var inMemoryDatabase *InMemoryDatabase
 
 // ReadModelFacade is an interface for the readmodel facade
 type ReadModelFacade interface {
@@ -37,8 +37,8 @@ type ReadModel struct {
 
 // NewReadModel constructs a new read model
 func NewReadModel() *ReadModel {
-	if bullShitDatabase == nil {
-		bullShitDatabase = NewBullShitDatabase()
+	if inMemoryDatabase == nil {
+		inMemoryDatabase = NewInMemoryDatabase()
 	}
 
 	return &ReadModel{}
@@ -46,12 +46,12 @@ func NewReadModel() *ReadModel {
 
 // GetInventoryItems returns a slice of all inventory items
 func (m *ReadModel) GetInventoryItems() []*InventoryItemListDto {
-	return bullShitDatabase.List
+	return inMemoryDatabase.List
 }
 
 // GetInventoryItemDetails gets an InventoryItemDetailsDto by ID
 func (m *ReadModel) GetInventoryItemDetails(uuid string) *InventoryItemDetailsDto {
-	if i, ok := bullShitDatabase.Details[uuid]; ok {
+	if i, ok := inMemoryDatabase.Details[uuid]; ok {
 		return i
 	}
 	return nil
@@ -64,8 +64,8 @@ type InventoryListView struct {
 
 // NewInventoryListView constructs a new InventoryListView
 func NewInventoryListView() *InventoryListView {
-	if bullShitDatabase == nil {
-		bullShitDatabase = NewBullShitDatabase()
+	if inMemoryDatabase == nil {
+		inMemoryDatabase = NewInMemoryDatabase()
 	}
 
 	return &InventoryListView{}
@@ -78,14 +78,14 @@ func (v *InventoryListView) Handle(message ycq.EventMessage) {
 
 	case *InventoryItemCreated:
 
-		bullShitDatabase.List = append(bullShitDatabase.List, &InventoryItemListDto{
+		inMemoryDatabase.List = append(inMemoryDatabase.List, &InventoryItemListDto{
 			ID:   message.AggregateID(),
 			Name: event.Name,
 		})
 
 	case *InventoryItemRenamed:
 
-		for _, v := range bullShitDatabase.List {
+		for _, v := range inMemoryDatabase.List {
 			if v.ID == message.AggregateID() {
 				v.Name = event.NewName
 				break
@@ -94,7 +94,7 @@ func (v *InventoryListView) Handle(message ycq.EventMessage) {
 
 	case *InventoryItemDeactivated:
 		i := -1
-		for k, v := range bullShitDatabase.List {
+		for k, v := range inMemoryDatabase.List {
 			if v.ID == message.AggregateID() {
 				i = k
 				break
@@ -102,9 +102,9 @@ func (v *InventoryListView) Handle(message ycq.EventMessage) {
 		}
 
 		if i >= 0 {
-			bullShitDatabase.List = append(
-				bullShitDatabase.List[:i],
-				bullShitDatabase.List[i+1:]...,
+			inMemoryDatabase.List = append(
+				inMemoryDatabase.List[:i],
+				inMemoryDatabase.List[i+1:]...,
 			)
 		}
 	}
@@ -115,15 +115,6 @@ func (v *InventoryListView) Handle(message ycq.EventMessage) {
 type InventoryItemDetailView struct {
 }
 
-// NewInventoryItemDetailView constructs a new InventoryItemDetailView
-func NewInventoryItemDetailView() *InventoryItemDetailView {
-	if bullShitDatabase == nil {
-		bullShitDatabase = NewBullShitDatabase()
-	}
-
-	return &InventoryItemDetailView{}
-}
-
 // Handle handles events and build the projection
 func (v *InventoryItemDetailView) Handle(message ycq.EventMessage) {
 
@@ -131,7 +122,7 @@ func (v *InventoryItemDetailView) Handle(message ycq.EventMessage) {
 
 	case *InventoryItemCreated:
 
-		bullShitDatabase.Details[message.AggregateID()] = &InventoryItemDetailsDto{
+		inMemoryDatabase.Details[message.AggregateID()] = &InventoryItemDetailsDto{
 			ID:      message.AggregateID(),
 			Name:    event.Name,
 			Version: 0,
@@ -164,7 +155,7 @@ func (v *InventoryItemDetailView) Handle(message ycq.EventMessage) {
 
 	case *InventoryItemDeactivated:
 
-		delete(bullShitDatabase.Details, message.AggregateID())
+		delete(inMemoryDatabase.Details, message.AggregateID())
 
 	}
 }
@@ -172,7 +163,7 @@ func (v *InventoryItemDetailView) Handle(message ycq.EventMessage) {
 // GetDetailsItem gets an InventoryItemDetailsDto by ID
 func (v *InventoryItemDetailView) GetDetailsItem(id string) (*InventoryItemDetailsDto, error) {
 
-	d, ok := bullShitDatabase.Details[id]
+	d, ok := inMemoryDatabase.Details[id]
 	if !ok {
 		return nil, errors.New("did not find the original inventory this shouldn't not happen")
 	}
@@ -180,15 +171,15 @@ func (v *InventoryItemDetailView) GetDetailsItem(id string) (*InventoryItemDetai
 	return d, nil
 }
 
-// BullShitDatabase is a simple in memory repository
-type BullShitDatabase struct {
+// InMemoryDatabase is a simple in memory repository
+type InMemoryDatabase struct {
 	Details map[string]*InventoryItemDetailsDto
 	List    []*InventoryItemListDto
 }
 
-// NewBullShitDatabase constructs a new BullShitDatabase
-func NewBullShitDatabase() *BullShitDatabase {
-	return &BullShitDatabase{
+// NewInMemoryDatabase constructs a new InMemoryDatabase
+func NewInMemoryDatabase() *InMemoryDatabase {
+	return &InMemoryDatabase{
 		Details: make(map[string]*InventoryItemDetailsDto),
 	}
 }

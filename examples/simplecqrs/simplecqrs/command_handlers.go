@@ -18,7 +18,7 @@ type InventoryCommandHandlers struct {
 	repo InventoryItemRepository
 }
 
-// NewInventoryCommandHandlers contructs a new InventoryCommandHandlers
+// NewInventoryCommandHandlers constructs a new InventoryCommandHandlers
 func NewInventoryCommandHandlers(repo InventoryItemRepository) *InventoryCommandHandlers {
 	return &InventoryCommandHandlers{
 		repo: repo,

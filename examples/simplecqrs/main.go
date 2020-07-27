@@ -56,20 +56,6 @@ func init() {
 	// Here we use an in memory event repository.
 	repo := simplecqrs.NewInMemoryRepo(eventBus)
 
-	// Here we use geteventstore with the go.geteventstore client
-	// https://github.com/jetbasrawi/go.geteventstore
-	// Uncomment the following code and comment out the previous in memory repository
-	// to use geteventstore
-
-	//client, err := goes.NewClient(nil, "http://localhost:2113")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//repo, err := simplecqrs.NewInventoryItemRepo(client, eventBus)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-
 	// Create an InventoryCommandHandlers instance
 	inventoryCommandHandler := simplecqrs.NewInventoryCommandHandlers(repo)
 
@@ -279,4 +265,3 @@ func setupHandlers() *http.ServeMux {
 
 	return mux
 }
-
